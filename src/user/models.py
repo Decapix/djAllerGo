@@ -4,16 +4,21 @@ from django.core.validators import RegexValidator
 import uuid
 from django.utils import timezone
 from datetime import timedelta
+from django_countries.fields import CountryField
 
 # Create your models here.
 class Contact(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     phone_number = models.CharField(max_length=15, unique=True)
-    email = models.EmailField(blank=True, null=True)
+
 
     def __str__(self):
         return f"{self.name} ({self.phone_number})"
+    
+    def get_owner(self):
+        matching_users = User.objects.get(phone_number=self.phone_number)
+        return matching_users or None
 
 
 class NullableUniqueEmailField(models.EmailField):
@@ -50,6 +55,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     contacts = models.ManyToManyField(Contact, related_name='users')
     registration_date = models.DateTimeField(auto_now=True)
+    country = CountryField(blank_label="(select country)", default="FR")
+    route_clustering_begins = models.BooleanField(default=False) # the clustering of the routes have already start
 
 
     USERNAME_FIELD = 'phone_number'
@@ -59,6 +66,37 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.phone_number
+    
+    def get_extended_contacts(self):
+        """
+        Récupère une liste des contacts de l'utilisateur, ainsi que des contacts des contacts.
+        Évite les doublons et exclut les contacts sans utilisateur associé.
+        """
+        processed_users = set()  # Pour garder une trace des utilisateurs déjà traités
+        contacts_to_process = [self]  # Commence par l'utilisateur lui-même
+        all_contacts = set()  # Pour stocker tous les contacts uniques
+
+        while contacts_to_process:
+            current_user = contacts_to_process.pop()
+            if current_user.id in processed_users:
+                continue  # Skip si cet utilisateur a déjà été traité
+
+            for contact in current_user.contacts.all():
+                all_contacts.add(contact)
+                owner = contact.get_owner()
+                if owner and owner.id not in processed_users:
+                    contacts_to_process.append(owner)
+
+            processed_users.add(current_user.id)
+
+        return list(all_contacts)
+    
+    def get_user_clusters(self):
+        # Récupère toutes les routes de cet utilisateur
+        routes = self.route.all()
+        # Récupère les clusters associés à ces routes
+        clusters = set(route.cluster for route in routes if route.cluster)
+        return clusters
 
 
 
@@ -68,7 +106,7 @@ class Riddle(models.Model):
     correct_answer = models.CharField(max_length=25)
     
     def __str__(self):
-        return f"Riddle {self.correct_answer}"
+        return f"{self.correct_answer}"
     
     
 class RiddleToken(models.Model):

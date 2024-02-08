@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
 from .models import Contact
 from django.core.exceptions import ValidationError
+from django.contrib.auth import authenticate
 
 User = get_user_model()
 
@@ -14,6 +15,7 @@ class SendVerificationCodeSerializer(serializers.Serializer):
     
     receive :
     - phone number
+    - country
     """
     phone_number = serializers.CharField(validators=[User.phone_regex])
 
@@ -28,7 +30,29 @@ class VerifyCodeSerializer(serializers.Serializer):
     token = serializers.CharField()  # Ajoutez ce champ pour le token
     
 
+# login 
 
+class LoginSerializer(serializers.Serializer):
+    login = serializers.CharField()
+    password = serializers.CharField()
+
+    def validate(self, data):
+        login = data.get('login')
+        password = data.get('password')
+
+        # Rechercher l'utilisateur par email ou numéro de téléphone
+        if '@' in login:
+            user = User.objects.filter(email=login).first()
+        else:
+            user = User.objects.filter(phone_number=login).first()
+
+        # Vérifier si l'utilisateur existe et si le mot de passe est correct
+        if user and check_password(password, user.password):
+            return user
+        else:
+            raise serializers.ValidationError("Invalid login or password.")
+
+    
 # other
 
 class AddAdditionalInformationSerializer(serializers.ModelSerializer):
@@ -38,7 +62,7 @@ class AddAdditionalInformationSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = User
-        fields = ['email', 'password', 'other_field']  # Ajoutez les champs nécessaires, comme Google ou Apple IDs
+        fields = ['email', 'password']  # Ajoutez les champs nécessaires, comme Google ou Apple IDs
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exists():
@@ -59,7 +83,9 @@ class AddAdditionalInformationSerializer(serializers.ModelSerializer):
 class ContactSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contact
-        fields = ('id', 'name', 'phone_number', 'email', 'owner')
+        fields = ['name', 'phone_number']
 
-    def create(self, validated_data):
-        return Contact.objects.create(**validated_data)
+    def validate_phone_number(self, value):
+        # Tu peux ajouter ici des validations supplémentaires pour le numéro de téléphone si nécessaire
+        return value
+

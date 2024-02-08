@@ -12,10 +12,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from datetime import timedelta
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+GDAL_LIBRARY_PATH = '/usr/lib/libgdal.so'
 
 
 # Quick-start development settings - unsuitable for production
@@ -41,6 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    
+    'django_countries',
+    'django.contrib.gis',
+    'django_celery_results',
+
 
     'user',
     'relation'
@@ -90,11 +97,11 @@ WSGI_APPLICATION = 'djAllerGo.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'allergodb2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': 'allergodb',
         'USER': 'postgres',
-        'PASSWORD': ':)solenopsIs<$o',
-        'HOST': 'localhost',
+        'PASSWORD': ':)Solenops1s<$o',
+        'HOST': 'localhost',        
         'PORT': '5432',
     }
 }
@@ -122,11 +129,17 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'CET'
 
 USE_I18N = True
+
+LANGUAGE_CODE = 'fr-fr'
+
+LANGUAGES = [
+    ('fr', 'Français'),
+    # autres langues si nécessaire
+]
 
 USE_TZ = True
 
@@ -145,6 +158,14 @@ AUTH_USER_MODEL = 'user.User'
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Réglez la durée de vie du token selon vos besoins
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),  # Réglez la durée de vie du token selon vos besoins
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=400),
 }
+
+
+# Celery Configuration 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'django-db'

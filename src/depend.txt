@@ -1,0 +1,76 @@
+PostGIS > https://docs.djangoproject.com/fr/5.0/ref/contrib/gis/install/postgis/
+SpaciaLite > https://docs.djangoproject.com/fr/5.0/ref/contrib/gis/install/spatialite/
+
+
+windows > https://www.pointsnorthgis.ca/blog/geodjango-gdal-setup-windows-10/
+
+https://www.lfd.uci.edu/~gohlke/pythonlibs/#gdal
+
+
+
+
+
+Je comprends que la configuration de GeoDjango sous Windows peut être déroutante en raison des différentes dépendances à installer et configurer. Voici une méthode simplifiée pour installer et configurer GeoDjango sous Windows 11 :
+
+Étape 1 : Installation de Python et Django
+Assurez-vous que Python est déjà installé sur votre système. Si ce n'est pas le cas, téléchargez et installez Python depuis le site officiel de Python.
+
+Installez Django dans votre environnement Python, si ce n'est pas déjà fait, en utilisant pip :
+
+ 
+pip install django
+Étape 2 : Utiliser OSGeo4W pour Installer les Dépendances Géospatiales
+Télécharger OSGeo4W :
+
+Allez sur le site d'OSGeo4W et téléchargez l'installateur (OSGeo4W Network Installer).
+Exécution de l'Installateur :
+
+Lancez l'installateur et choisissez l'option "Express Desktop Install".
+Sélectionnez les packages requis comme QGIS (qui inclut GDAL, GEOS, et Proj).
+Installation :
+
+Suivez les instructions pour installer les packages sélectionnés.
+Étape 3 : Configurer les Variables d'Environnement
+Après l'installation via OSGeo4W, les chemins nécessaires sont généralement ajoutés automatiquement à votre variable d'environnement PATH. Cependant, vous pouvez vérifier et les ajouter manuellement si nécessaire :
+
+Recherchez le Répertoire d'Installation de OSGeo4W (généralement C:\OSGeo4W64\bin).
+
+Ajouter le Chemin au PATH :
+
+Faites un clic droit sur "Ce PC" ou "Poste de travail", puis sélectionnez "Propriétés".
+Cliquez sur "Paramètres système avancés" > "Variables d'environnement".
+Sous "Variables système", trouvez et sélectionnez la variable Path, puis cliquez sur "Modifier".
+Ajoutez le chemin du répertoire bin d'OSGeo4W (par exemple, C:\OSGeo4W64\bin).
+Définir GDAL_LIBRARY_PATH dans settings.py (facultatif) :
+
+Si Django ne parvient toujours pas à trouver GDAL, vous pouvez spécifier le chemin directement dans votre fichier settings.py.
+Exemple :
+
+
+GDAL_LIBRARY_PATH = r'C:\OSGeo4W64\bin\gdalXXX.dll'
+Remplacez gdalXXX.dll par le nom du fichier DLL correspondant à votre version de GDAL.
+Étape 4 : Tester l'Installation
+Ouvrir une Nouvelle Invite de Commande (pour s'assurer que les variables d'environnement mises à jour sont chargées).
+
+Vérifier les Versions des Bibliothèques :
+
+Exécutez gdalinfo --version et geos-config --version pour vérifier si GDAL et GEOS sont correctement installés.
+Étape 5 : Créer et Exécuter votre Projet Django
+Maintenant que les dépendances géospatiales sont installées, vous pouvez continuer à travailler sur votre projet Django en utilisant GeoDjango.
+N'oubliez pas de redémarrer votre serveur de développement Django après avoir effectué des modifications dans le fichier settings.py ou après avoir modifié les variables d'environnement. Si vous rencontrez toujours des problèmes, il peut être utile de consulter la documentation de Django ou les forums de la communauté pour des cas spécifiques.
+
+
+~~~~~~
+éventuelement pour localiser la Bibliothèques :
+
+
+if os.name == 'nt':
+    VENV_BASE = os.environ['VIRTUAL_ENV']
+    os.environ['PATH'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo') + ';' + os.environ['PATH']
+    os.environ['PROJ_LIB'] = os.path.join(VENV_BASE, 'Lib\\site-packages\\osgeo\\data\\proj') + ';' + os.environ['PATH']
+~~~~~~
+
+
+
+
+et redis pour celery aussi 
